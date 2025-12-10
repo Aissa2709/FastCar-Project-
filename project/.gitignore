@@ -1,0 +1,26 @@
+# Compiled files
+bin/
+*.class
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Invoices (generated at runtime)
+invoices/
+*.html
+*.pdf
+
+# Logs
+*.log
+
+# Backup files
+*.bak
+*.tmp
