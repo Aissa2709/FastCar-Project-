@@ -273,9 +273,9 @@ public class PDFInvoiceGenerator {
         html.append("        <div class=\"footer\">\n");
         html.append("            <div class=\"footer-info\">\n");
         html.append("                <p><strong>FASTCAR MAROC</strong></p>\n");
-        html.append("                <p>Siège social : Bd Mohammed V, Casablanca</p>\n");
-        html.append("                <p>Tél : 05 22 33 44 55 | RC : 123456</p>\n");
-        html.append("                <p>Patente : 78901234 | IF : 98765432</p>\n");
+        html.append("                <p>Siège social : Avenue Mohammed VI, Marrakech</p>\n");
+        html.append("                <p>Tél : 05 24 11 22 33 | RC : 654321</p>\n");
+        html.append("                <p>Patente : 43210987 | IF : 23456789</p>\n");
         html.append("                <p style=\"margin-top: 15px; font-style: italic;\">Merci de votre confiance !</p>\n");
         html.append("            </div>\n");
         html.append("        </div>\n");
