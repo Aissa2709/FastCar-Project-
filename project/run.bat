@@ -1,12 +1,15 @@
 @echo off
 REM Script de lancement de FastCar Location
+set "JAVA_HOME=C:\Program Files\JetBrains\IntelliJ IDEA 2025.2.3\jbr"
+set "JAVAC=%JAVA_HOME%\bin\javac.exe"
+set "JAVA=%JAVA_HOME%\bin\java.exe"
 
 echo ================================
 echo FastCar Location - Application
 echo ================================
 echo.
 echo Compilation en cours...
-javac -cp "lib\mysql-connector-j-9.5.0.jar" -d bin ^
+"%JAVAC%" -cp "lib\mysql-connector-j-9.5.0.jar" -d bin ^
   src\com\fastcar\model\*.java ^
   src\com\fastcar\dao\*.java ^
   src\com\fastcar\util\*.java ^
@@ -25,6 +28,6 @@ echo Lancement de l'application...
 echo.
 
 REM Lancer l'application avec le bon classpath
-java -cp "lib\mysql-connector-j-9.5.0.jar;bin" com.fastcar.ui.MainFrame
+"%JAVA%" -cp "lib\mysql-connector-j-9.5.0.jar;bin" com.fastcar.ui.MainFrame
 
 pause
