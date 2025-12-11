@@ -2,74 +2,89 @@ package com.fastcar.ui;
 
 import com.fastcar.dao.VoitureDAO;
 import com.fastcar.model.Voiture;
+import com.fastcar.ui.components.ModernButton;
+import com.fastcar.ui.components.ModernButton.ButtonType;
+import com.fastcar.ui.components.ModernTable;
+import com.fastcar.ui.theme.ModernTheme;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.util.List;
 
-import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 
 public class PanelVoitures extends JPanel {
 
-    private JTable table;
+    private ModernTable table;
     private DefaultTableModel tableModel;
     private VoitureDAO voitureDAO;
 
     public PanelVoitures() {
         voitureDAO = new VoitureDAO();
         setLayout(new BorderLayout());
-        setBackground(Color.WHITE);
-        setBorder(new EmptyBorder(20, 20, 20, 20));
+        setBackground(ModernTheme.BACKGROUND);
+        // No border here because MainFrame adds margin, or maybe we want an internal
+        // card look
+        // Let's add an internal border to simulate a "Card"
+        setBorder(null); // Managed by MainFrame margin
 
         // --- Top Panel: Title and Search ---
-        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        topPanel.setBackground(Color.WHITE);
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setBackground(ModernTheme.BACKGROUND);
+        topPanel.setBorder(new EmptyBorder(0, 0, 20, 0)); // Spacing below header
 
         JLabel lblTitle = new JLabel("Gestion des Voitures");
-        lblTitle.setFont(lblTitle.getFont().deriveFont(20.0f));
+        lblTitle.setFont(ModernTheme.HEADER_FONT);
+        lblTitle.setForeground(ModernTheme.TEXT_DARK);
+
+        JPanel actionsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        actionsPanel.setBackground(ModernTheme.BACKGROUND);
 
         JTextField txtSearch = new JTextField(20);
-        JButton btnSearch = new JButton("Rechercher");
-        JButton btnAjouter = new JButton("+ Ajouter Voiture");
-        JButton btnSupprimer = new JButton("✕ Supprimer");
-        JButton btnActualiser = new JButton("Actualiser");
+        // Style text field slightly (basic for now)
+        txtSearch.setFont(ModernTheme.MAIN_FONT);
 
-        topPanel.add(lblTitle);
-        topPanel.add(new JLabel("   "));
-        topPanel.add(txtSearch);
-        topPanel.add(btnSearch);
-        topPanel.add(new JLabel("   "));
-        topPanel.add(btnAjouter);
-        topPanel.add(btnSupprimer);
-        topPanel.add(btnActualiser);
+        ModernButton btnSearch = new ModernButton("Rechercher", ButtonType.SECONDARY);
+        ModernButton btnAjouter = new ModernButton("+ Ajouter", ButtonType.PRIMARY);
+        ModernButton btnSupprimer = new ModernButton("Supprimer", ButtonType.DANGER);
+        ModernButton btnActualiser = new ModernButton("Actualiser", ButtonType.SECONDARY);
+
+        actionsPanel.add(txtSearch);
+        actionsPanel.add(btnSearch);
+        actionsPanel.add(new JLabel("  ")); // spacer
+        actionsPanel.add(btnAjouter);
+        actionsPanel.add(btnSupprimer);
+        actionsPanel.add(btnActualiser);
+
+        topPanel.add(lblTitle, BorderLayout.WEST);
+        topPanel.add(actionsPanel, BorderLayout.EAST);
 
         add(topPanel, BorderLayout.NORTH);
 
         // --- Center Panel: Table ---
         String[] columnNames = { "Matricule", "Marque", "Modèle", "Prix/Jour", "Etat" };
-        tableModel = new DefaultTableModel(columnNames, 0);
-        table = new JTable(tableModel);
+        tableModel = new DefaultTableModel(columnNames, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        table = new ModernTable(tableModel);
 
         // --- Enable Sorting and Filtering ---
         javax.swing.table.TableRowSorter<DefaultTableModel> sorter = new javax.swing.table.TableRowSorter<>(tableModel);
         table.setRowSorter(sorter);
-
         table.setFillsViewportHeight(true);
-        table.setRowHeight(25);
-        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
         // Search Logic
         txtSearch.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
@@ -101,15 +116,10 @@ public class PanelVoitures extends JPanel {
 
         btnSearch.addActionListener(e -> {
             String text = txtSearch.getText();
-            if (text.trim().length() == 0) {
+            if (text.trim().length() == 0)
                 sorter.setRowFilter(null);
-            } else {
-                try {
-                    sorter.setRowFilter(javax.swing.RowFilter.regexFilter("(?i)" + text));
-                } catch (java.util.regex.PatternSyntaxException pse) {
-                    System.err.println("Bad regex pattern");
-                }
-            }
+            else
+                sorter.setRowFilter(javax.swing.RowFilter.regexFilter("(?i)" + text));
         });
 
         btnAjouter.addActionListener(e -> showAddVoitureDialog());
@@ -117,17 +127,24 @@ public class PanelVoitures extends JPanel {
         btnSupprimer.addActionListener(e -> {
             int selectedRow = table.getSelectedRow();
             if (selectedRow == -1) {
-                JOptionPane.showMessageDialog(this, "Sélectionnez une voiture à supprimer", "Erreur", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Sélectionnez une voiture à supprimer", "Erreur",
+                        JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            String matricule = (String) tableModel.getValueAt(selectedRow, 0);
-            int confirm = JOptionPane.showConfirmDialog(this, "Êtes-vous sûr de vouloir supprimer cette voiture ?", "Confirmation", JOptionPane.YES_NO_OPTION);
+            // fix model index if sorted
+            int modelRow = table.convertRowIndexToModel(selectedRow);
+            String matricule = (String) tableModel.getValueAt(modelRow, 0);
+
+            int confirm = JOptionPane.showConfirmDialog(this, "Êtes-vous sûr de vouloir supprimer cette voiture ?",
+                    "Confirmation", JOptionPane.YES_NO_OPTION);
             if (confirm == JOptionPane.YES_OPTION) {
                 if (voitureDAO.deleteVoiture(matricule)) {
                     refreshData();
-                    JOptionPane.showMessageDialog(this, "Voiture supprimée avec succès", "Succès", JOptionPane.INFORMATION_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Voiture supprimée avec succès", "Succès",
+                            JOptionPane.INFORMATION_MESSAGE);
                 } else {
-                    JOptionPane.showMessageDialog(this, "Erreur lors de la suppression", "Erreur", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Erreur lors de la suppression", "Erreur",
+                            JOptionPane.ERROR_MESSAGE);
                 }
             }
         });
@@ -135,6 +152,8 @@ public class PanelVoitures extends JPanel {
         btnActualiser.addActionListener(e -> refreshData());
 
         JScrollPane scrollPane = new JScrollPane(table);
+        scrollPane.setBorder(null); // Clean look
+        scrollPane.getViewport().setBackground(ModernTheme.BACKGROUND); // match bg
         add(scrollPane, BorderLayout.CENTER);
 
         // Initial load
@@ -143,6 +162,7 @@ public class PanelVoitures extends JPanel {
 
     private void showAddVoitureDialog() {
         JPanel panel = new JPanel(new GridBagLayout());
+        // Basic dialog styling
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -151,7 +171,8 @@ public class PanelVoitures extends JPanel {
         JTextField txtMarque = new JTextField(15);
         JTextField txtModele = new JTextField(15);
         JTextField txtPrix = new JTextField(15);
-        JComboBox<String> cbEtat = new JComboBox<>(new String[]{"Disponible", "Louée", "En maintenance", "Hors service"});
+        JComboBox<String> cbEtat = new JComboBox<>(
+                new String[] { "Disponible", "Louée", "En maintenance", "Hors service" });
 
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -193,19 +214,23 @@ public class PanelVoitures extends JPanel {
                 String etat = (String) cbEtat.getSelectedItem();
 
                 if (matricule.isEmpty() || marque.isEmpty() || modele.isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Matricule, Marque et Modèle sont obligatoires", "Erreur", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Matricule, Marque et Modèle sont obligatoires", "Erreur",
+                            JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
                 Voiture voiture = new Voiture(matricule, marque, modele, prix, etat);
                 if (voitureDAO.addVoiture(voiture)) {
                     refreshData();
-                    JOptionPane.showMessageDialog(this, "Voiture ajoutée avec succès", "Succès", JOptionPane.INFORMATION_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Voiture ajoutée avec succès", "Succès",
+                            JOptionPane.INFORMATION_MESSAGE);
                 } else {
-                    JOptionPane.showMessageDialog(this, "Erreur lors de l'ajout de la voiture", "Erreur", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Erreur lors de l'ajout de la voiture", "Erreur",
+                            JOptionPane.ERROR_MESSAGE);
                 }
             } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this, "Le prix doit être un nombre valide", "Erreur", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Le prix doit être un nombre valide", "Erreur",
+                        JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -215,11 +240,11 @@ public class PanelVoitures extends JPanel {
         List<Voiture> voitures = voitureDAO.getAllVoitures();
         for (Voiture voiture : voitures) {
             Object[] row = {
-                voiture.getMatricule(),
-                voiture.getMarque(),
-                voiture.getModele(),
-                String.format("%.2f DH", voiture.getPrixJournalier()),
-                voiture.getEtat()
+                    voiture.getMatricule(),
+                    voiture.getMarque(),
+                    voiture.getModele(),
+                    String.format("%.2f DH", voiture.getPrixJournalier()),
+                    voiture.getEtat()
             };
             tableModel.addRow(row);
         }

@@ -13,6 +13,8 @@ echo Compilation en cours...
   src\com\fastcar\model\*.java ^
   src\com\fastcar\dao\*.java ^
   src\com\fastcar\util\*.java ^
+  src\com\fastcar\ui\theme\*.java ^
+  src\com\fastcar\ui\components\*.java ^
   src\com\fastcar\ui\*.java
 
 if errorlevel 1 (
